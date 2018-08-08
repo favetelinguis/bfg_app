@@ -14,6 +14,14 @@ betfair_user: System.get_env("BETFAIR_USER"),
 betfair_password: System.get_env("BETFAIR_PASSWORD"),
 betfair_app_key: System.get_env("BETFAIR_APPKEY_DELAY")
 
+config :bfg_engine, BfgEngine.Repo,
+adapter: Ecto.Adapters.Postgres,
+database: "bfg",
+username: "postgres",
+password: "postgres",
+hostname: "localhost"
+
+config :bfg_engine, :ecto_repos, [BfgEngine.Repo]
 # This configuration is loaded before any dependency and is restricted
 # to this project. If another project depends on this project, this
 # file won't be loaded nor affect the parent project. For this reason,

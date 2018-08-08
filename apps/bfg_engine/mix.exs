@@ -27,6 +27,8 @@ defmodule BfgEngine.MixProject do
       {:poison, "~> 3.1"},
       {:timex, "~> 3.1"},
       {:hub, "~> 0.6"},
+      {:postgrex, ">= 0.0.0"},
+      {:ecto, "~> 2.1"},
       {:prometheus_ex, "~> 3.0"},
       {:bypass, github: "hassox/bypass", ref: "a8d8eeb49e4a52a96e8b1028afe6af483dd07602", only: :test},
       {:credo, "~> 0.10.0", only: [:dev, :test], runtime: false},

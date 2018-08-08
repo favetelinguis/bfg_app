@@ -10,6 +10,7 @@ defmodule BfgWeb.Application do
     children = [
       # Start the endpoint when the application starts
       supervisor(BfgWebWeb.Endpoint, []),
+      BfgWebWeb.Manager
       # Start your own worker by calling: BfgWeb.Worker.start_link(arg1, arg2, arg3)
       # worker(BfgWeb.Worker, [arg1, arg2, arg3]),
     ]

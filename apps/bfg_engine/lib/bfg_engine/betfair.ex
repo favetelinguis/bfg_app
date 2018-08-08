@@ -539,8 +539,8 @@ defmodule BfgEngine.API.Betfair.Betting do
   "{\"faultcode\":\"Client\",\"faultstring\":\"ANGX-0002\",\"detail\":{\"APINGException\":{\"requestUUID\":\"prdang038-05150915-01817065f9\",\"errorCode\":\"INVALID_INPUT_DATA\",\"errorDetails\":\"The customerStrategyRef is too long (15 character limit)\"},\"exceptionname\":\"APINGException\"}}"
   """
   def process_response_body(body) do
+    # TODO i should only gunzip if it needed when i get error i should not do it for example change appkey to something invalid and try
     body
-    |> IO.inspect()
     |> :zlib.gunzip() # Is needed since the body is gziped
     |> Poison.Parser.parse(keys: :atoms)
   end
