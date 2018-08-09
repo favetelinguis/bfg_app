@@ -819,6 +819,7 @@ defmodule BfgEngine.MarketStream.Betfair do
         BfgEngine.OrderCache.server_process(&1[:id]),
         &1
       ))
+    BfgEngine.Repo.insert_all("orders", [[order: msg, inserted_at: Ecto.DateTime.utc]])
     {:ok, state}
   end
 
@@ -835,6 +836,7 @@ defmodule BfgEngine.MarketStream.Betfair do
         BfgEngine.MarketCache.server_process(&1[:id]),
         &1
       ))
+    BfgEngine.Repo.insert_all("markets", [[market: msg, inserted_at: Ecto.DateTime.utc]])
     {:ok, state}
   end
 
