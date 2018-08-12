@@ -106,7 +106,10 @@ defmodule BfgEngine.RestConnection do
   end
 
   def handle_call({:subscribe, markets}, from, %{session_token: session_token, app_key: app_key} = s) do
-    BfgEngine.MarketStream.Betfair.start_link(session_token, app_key, markets)
+    children = [
+      {BfgEngine.StreamSupervisor, session_token: session_token, app_key: app_key, markets: markets}
+    ]
+    Supervisor.start_link(children, strategy: :one_for_one)
     {:reply, :ok, s}
   end
 
@@ -534,7 +537,7 @@ defmodule BfgEngine.API.Betfair.Betting do
   end
 
   @doc """
-  It looks like error messages are not gziped in the response only correct messages
+  It looks like the apingexception is not gziped in the response only correct messages
   example
   "{\"faultcode\":\"Client\",\"faultstring\":\"ANGX-0002\",\"detail\":{\"APINGException\":{\"requestUUID\":\"prdang038-05150915-01817065f9\",\"errorCode\":\"INVALID_INPUT_DATA\",\"errorDetails\":\"The customerStrategyRef is too long (15 character limit)\"},\"exceptionname\":\"APINGException\"}}"
   """
@@ -552,26 +555,6 @@ defmodule BfgEngine.API.Betfair.Betting do
 end
 
 defmodule BfgEngine.MarketStream.Betfair do
-  @moduledoc """
-  %% The client is implemented as a gen_server which keeps one socket
-  %% open to a single Redis instance. Users call us using the API in
-  %% eredis.erl.
-  %%
-  %% The client works like this:
-  %%  * When starting up, we connect to Redis with the given connection
-  %%     information, or fail.
-  %%  * Users calls us using gen_server:call, we send the request to Redis,
-  %%    add the calling process at the end of the queue and reply with
-  %%    noreply. We are then free to handle new requests and may reply to
-  %%    the user later.
-  %%  * We receive data on the socket, we parse the response and reply to
-  %%    the client at the front of the queue. If the parser does not have
-  %%    enough data to parse the complete response, we will wait for more
-  %%    data to arrive.
-  %%  * For pipeline commands, we include the number of responses we are
-  %%    waiting for in each element of the queue. Responses are queued until
-  %%    we have all the responses we need and then reply with all of them.
-  """
   use Connection
   require Logger
 
@@ -582,10 +565,20 @@ defmodule BfgEngine.MarketStream.Betfair do
 
   @initial_state %{socket: nil, connection_id: nil, session_token: nil, app_key: nil, counter: 0, markets: nil, msg: "", keep_alive_ref: nil}
 
+  def child_spec(args) do
+    %{
+      id: __MODULE__,
+      start: { __MODULE__, :start_link, [args]},
+      restart: :permanent,
+      shutdown: 5000,
+      type: :worker
+     }
+  end
+
   @doc """
   subscriber should be the pid of the process to recive all messages from tcp socket
   """
-  def start_link(session_token, app_key, markets) when is_list(markets) do
+  def start_link(session_token: session_token, app_key: app_key, markets: markets) when is_list(markets) do
     s = %{@initial_state | session_token: session_token, app_key: app_key, markets: markets}
     Connection.start_link(__MODULE__, s, name: __MODULE__)
   end
