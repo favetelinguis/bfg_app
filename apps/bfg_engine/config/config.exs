@@ -3,7 +3,7 @@
 use Mix.Config
 
 # Underlying module require single quoted string
-config :bfg_engine, stream_url: 'stream-api.betfair.com',
+config :bfg_engine,
 stream_port: 443,
 session_managemenet_url: "https://identitysso.betfair.com/api",
 betting_url: "https://api.betfair.com/exchange/betting/rest/v1.0",
