@@ -11,6 +11,7 @@ defmodule BfgEngine.Application do
     app_key = Application.get_env(:bfg_engine, :betfair_app_key)
     # List all child processes to be supervised
     children = [
+      BfgEngine.PubSub,
       BfgEngine.Repo,
       BfgEngine.ServerRegistry,
       BfgEngine.MarketCache,
