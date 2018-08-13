@@ -14,9 +14,14 @@ defmodule BfgEngine.PubSub do
   end
 
   @doc """
+  Subscribe to the given topic wich should be Event.topic()
+  Any pid can only subscribe once
+  Returns the last published message on topic or nil if no message has been published
   """
   def subscribe(topic) do
-    Registry.register(@me, topic, [])
+    if Enum.emty?(Registry.lookup(@me, topic)) do
+      Registry.register(@me, topic, [])
+    end
     get(topic)
   end
 
