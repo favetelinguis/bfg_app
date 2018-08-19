@@ -13,13 +13,13 @@ defmodule BfgEngine.Application do
     children = [
       BfgEngine.PubSub,
       BfgEngine.Repo,
-      BfgEngine.ServerRegistry,
-      BfgEngine.MarketCache,
-      BfgEngine.StrategyCache,
-      BfgEngine.OrderCache,
-      BfgEngine.MarketsServer,
-      BfgEngine.Subscriber,
-      {BfgEngine.Cerebro, %{password: pwd, username: usr, app_key: app_key, certs: ""}}
+      #BfgEngine.ServerRegistry,
+      #BfgEngine.MarketCache,
+      #BfgEngine.StrategyCache,
+      #BfgEngine.OrderCache,
+      #BfgEngine.MarketsServer,
+      #BfgEngine.Subscriber,
+      #{BfgEngine.Cerebro, %{password: pwd, username: usr, app_key: app_key, certs: ""}}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
