@@ -26,7 +26,8 @@ defmodule BfgEngine.PubSub do
   end
 
   def publish(%_{} = data) do
-    Registry.dispatch(@me, data.__struct__, fn entries ->
+    key = data.__struct__
+    Registry.dispatch(@me, key, fn entries ->
       for {pid, _} <- entries, do: send(pid, data)
     end)
     put(key, data) # Put after i dispatch so if i subscribe at the same time i will get the new value in the inbox
