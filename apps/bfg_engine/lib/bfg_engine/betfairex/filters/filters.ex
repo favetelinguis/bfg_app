@@ -13,8 +13,8 @@ defmodule BfgEngine.Betfairex.Filters do
         }
       },
       marketProjection: [
-        "MARKET_START_TIME",
-        "RUNNER_DESCRIPTION"
+        #"MARKET_START_TIME",
+        #"RUNNER_DESCRIPTION"
       ],
       # sort: "FIRST_TO_START",
       maxResults: 3
