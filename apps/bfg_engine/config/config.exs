@@ -19,7 +19,8 @@ adapter: Ecto.Adapters.Postgres,
 database: "bfg",
 username: "postgres",
 password: "postgres",
-hostname: "localhost"
+hostname: "localhost",
+loggers: []
 
 config :bfg_engine, :ecto_repos, [BfgEngine.Repo]
 # This configuration is loaded before any dependency and is restricted
