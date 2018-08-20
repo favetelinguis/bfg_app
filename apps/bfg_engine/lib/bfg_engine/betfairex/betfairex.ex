@@ -5,7 +5,7 @@ defmodule BfgEngine.Betfairex do
   require Logger
 
   alias BfgEngine.Betfairex.Filters
-  import BfgEngine.Betfairex.Rest.SessionManager, only: [send_betting: 2]
+  import BfgEngine.Betfairex.Session.SessionManager, only: [send_betting: 2]
 
   def list_market_catalogue() do
     send_betting("/listMarketCatalogue", Filters.default_race_card_request())
