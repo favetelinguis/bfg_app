@@ -11,7 +11,7 @@ defmodule BfgEngine.Betfairex.Session.SessionSupervisor do
   @impl true
   def init(_arg) do
     children = [
-      BfgEngine.Betfairex.Rest.SessionManager,
+      BfgEngine.Betfairex.Session.SessionManager,
       BfgEngine.Betfairex.Stream.SubscriptionManager
     ]
 
