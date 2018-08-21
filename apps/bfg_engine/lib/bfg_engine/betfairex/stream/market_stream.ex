@@ -210,6 +210,8 @@ defmodule BfgEngine.Betfairex.Stream.MarketStream do
   end
 
   defp get_new_market_ids() do
+    # TODO need to handle failuer here ex [warn] Error in response: {:ok, %HTTPoison.Response{body: {:error, :invalid, 0}, headers: [], request_url: "https://api.betfair.com/exchange/betting/rest/v1.0/listMarketCatalogue/", status_code: 503}}
+    # also handle empty list
     {:ok, markets} = Betfairex.list_market_catalogue()
     Enum.map(markets, &Map.get(&1, :marketId))
   end
