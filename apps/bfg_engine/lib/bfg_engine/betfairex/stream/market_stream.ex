@@ -10,6 +10,8 @@ defmodule BfgEngine.Betfairex.Stream.MarketStream do
   @app_key Application.get_env(:bfg_engine, :betfair_app_key)
   @keep_alive_timeout 5000
 
+  @lookup :oc
+
   @initial_state %{
     socket: nil,
     session_token: nil,
@@ -23,6 +25,7 @@ defmodule BfgEngine.Betfairex.Stream.MarketStream do
 
   alias BfgEngine.Betfairex.Session.{SubscriptionStore}
   alias BfgEngine.Betfairex.Rest.{SessionManager}
+  alias BfgEngine.Betfairex.Cache.MarketCache
   alias BfgEngine.Betfairex
 
   # Client
@@ -184,23 +187,32 @@ defmodule BfgEngine.Betfairex.Stream.MarketStream do
     {:ok, state}
   end
 
-  defp handle_msg(state, %{op: "mcm", mc: markets} = msg) do
-    Logger.debug("Market change #{inspect(msg)}")
-    # Enum.each(
-    #   markets,
-    #   &BfgEngine.MarketServer.generate_events(
-    #     BfgEngine.MarketCache.server_process(&1[:id]),
-    #     &1
-    #   ))
-    BfgEngine.Repo.insert_all("markets", [[market: msg, inserted_at: Ecto.DateTime.utc()]])
+  defp handle_msg(state, %{op: "mcm"} = msg) do
+    # TODO send conflateMs to prometheus
+    # TODO send heartbeatMs to prometheus
+    ct = Map.get(msg, :ct, "UPDATE")
+
+    case ct do
+      "SUB_IMAGE" ->
+        on_subscription(msg)
+
+      "RESUB_DELTA" ->
+        on_resubscribe(msg)
+
+      # on heartbeat update clk
+      "HEARTBEAT" ->
+        Logger.debug("Market HEARTBEAT #{inspect(msg)}")
+
+      "UPDATE" ->
+        on_update(msg)
+    end
+
+    unless ct == "HEARTBEAT" do
+      BfgEngine.Repo.insert_all("markets", [[market: msg, inserted_at: Ecto.DateTime.utc()]])
+    end
 
     {:ok,
      %{state | initialClk: msg[:initialClk] || state.initialClk, clk: msg[:clk] || state.clk}}
-  end
-
-  defp handle_msg(state, %{op: "mcm", ct: "HEARTBEAT"} = msg) do
-    Logger.debug("Market change HEARTBEAT #{inspect(msg)}")
-    {:ok, %{state | initialClk: msg[:initialClk] || state.initialClk, clk: msg[:clk] || state.clk}}
   end
 
   defp send_msg(socket, msg, next) do
@@ -214,5 +226,36 @@ defmodule BfgEngine.Betfairex.Stream.MarketStream do
     # also handle empty list
     {:ok, markets} = Betfairex.list_market_catalogue()
     Enum.map(markets, &Map.get(&1, :marketId))
+  end
+
+  defp on_subscription(msg) do
+    # TODO send count to prometheus on number subscriptions
+    Logger.debug("Market SUB_IMAGE #{inspect(msg)}")
+
+    if msg[@lookup] do
+      publish_time = Timex.from_unix(msg[:pt], :milliseconds)
+      MarketCache.update(msg[@lookup], publish_time)
+    end
+  end
+
+  defp on_resubscribe(msg) do
+    # TODO send count to prometheus on number re subscriptions
+    Logger.debug("Market RESUB_DELTA #{inspect(msg)}")
+
+    if msg[@lookup] do
+      publish_time = Timex.from_unix(msg[:pt], :milliseconds)
+      MarketCache.update(msg[@lookup], publish_time)
+    end
+  end
+
+  defp on_update(msg) do
+    Logger.debug("Market UPDATE #{inspect(msg)}")
+    publish_time = Timex.from_unix(msg[:pt], :milliseconds)
+    latency = Timex.diff(Timex.now, publish_time, :milliseconds)
+    # TODO send latency to prometheus
+    # TODO send count number updates to prometheus
+    if msg[@lookup] do
+      MarketCache.update(msg[@lookup], publish_time)
+    end
   end
 end
