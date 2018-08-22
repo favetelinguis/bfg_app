@@ -10,6 +10,8 @@ defmodule BfgEngine.Betfairex.Stream.OrderStream do
   @app_key Application.get_env(:bfg_engine, :betfair_app_key)
   @keep_alive_timeout 5000
 
+  @lookup :oc
+
   @initial_state %{
     socket: nil,
     session_token: nil,
@@ -22,6 +24,7 @@ defmodule BfgEngine.Betfairex.Stream.OrderStream do
 
   alias BfgEngine.Betfairex.Session.{SubscriptionStore}
   alias BfgEngine.Betfairex.Rest.{SessionManager}
+  alias BfgEngine.Betfairex.Cache.OrderCache
 
   # Client
   def start_link(session_token), do: Connection.start_link(@me, session_token, name: @me)
@@ -52,7 +55,10 @@ defmodule BfgEngine.Betfairex.Stream.OrderStream do
   end
 
   def disconnect(_info, %{socket: socket, keep_alive_ref: timer_ref} = state) do
-    if timer_ref do Process.cancel_timer(timer_ref) end
+    if timer_ref do
+      Process.cancel_timer(timer_ref)
+    end
+
     :ok = :ssl.close(socket)
     {:connect, :reconnect, %{state | counter: 0}}
   end
@@ -146,16 +152,19 @@ defmodule BfgEngine.Betfairex.Stream.OrderStream do
     # %{connectionClosed: false, id: 1, op: "status", statusCode: "SUCCESS"}
     Logger.debug("Authentication OK do subscribe")
     next = state.counter + 1
+
     sub_msg = %{
       "op" => "orderSubscription",
       "initialClk" => initialClk,
       "clk" => clk,
-      # TODO not sure how this works
+      # TODO can this be set to zero to get tick data?
       "conflateMs" => nil,
       "heartbeatMs" => @keep_alive_timeout,
+      "includeOverallPosition" => true,
       # TODO should prob implement support for this
-      "segmentationEnabled" => false,
-      "partitionMatchedByStrategyRef" => true}
+      "segmentationEnabled" => false
+      # "partitionMatchedByStrategyRef" => true
+    }
 
     send_msg(socket, sub_msg, next)
     {:ok, %{state | counter: next}}
@@ -171,19 +180,23 @@ defmodule BfgEngine.Betfairex.Stream.OrderStream do
   end
 
   defp handle_msg(state, %{op: "ocm"} = msg) do
+    # TODO send conflateMs to prometheus
+    # TODO send heartbeatMs to prometheus
     ct = Map.get(msg, :ct, "UPDATE")
+
     case ct do
       "SUB_IMAGE" ->
-        Logger.debug("Order SUB_IMAGE #{inspect(msg)}")
+        on_subscription(msg)
 
       "RESUB_DELTA" ->
-        Logger.debug("Order RESUB_DELTA #{inspect(msg)}")
+        on_resubscribe(msg)
 
+      # on heartbeat update clk
       "HEARTBEAT" ->
         Logger.debug("Order HEARTBEAT #{inspect(msg)}")
 
       "UPDATE" ->
-        Logger.debug("Order UPDATE #{inspect(msg)}")
+        on_update(msg)
     end
 
     unless ct == "HEARTBEAT" do
@@ -198,5 +211,36 @@ defmodule BfgEngine.Betfairex.Stream.OrderStream do
     data = Map.put(msg, :id, next)
     data = Poison.encode!(data) <> "\r\n"
     :ok = :ssl.send(socket, data)
+  end
+
+  defp on_subscription(msg) do
+    # TODO send count to prometheus on number subscriptions
+    Logger.debug("Order SUB_IMAGE #{inspect(msg)}")
+
+    if msg[@lookup] do
+      publish_time = Timex.from_unix(msg[:pt], :milliseconds)
+      OrderCache.update(msg[@lookup], publish_time)
+    end
+  end
+
+  defp on_resubscribe(msg) do
+    # TODO send count to prometheus on number re subscriptions
+    Logger.debug("Order RESUB_DELTA #{inspect(msg)}")
+
+    if msg[@lookup] do
+      publish_time = Timex.from_unix(msg[:pt], :milliseconds)
+      OrderCache.update(msg[@lookup], publish_time)
+    end
+  end
+
+  defp on_update(msg) do
+    Logger.debug("Order UPDATE #{inspect(msg)}")
+    publish_time = Timex.from_unix(msg[:pt], :milliseconds)
+    latency = Timex.diff(Timex.now, publish_time, :milliseconds)
+    # TODO send latency to prometheus
+    # TODO send count number updates to prometheus
+    if msg[@lookup] do
+      OrderCache.update(msg[@lookup], publish_time)
+    end
   end
 end

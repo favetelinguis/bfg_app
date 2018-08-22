@@ -16,4 +16,5 @@ key = Application.get_env(:bfg_engine, :betfair_app_key)
 
 login = fn -> SessionManager.start_link(usr, pwd, key) end
 bfsup = fn -> BfgEngine.Betfairex.BetfairexSupervisor.start_link(nil) end
+invalidate = fn -> BfgEngine.Betfairex.Session.SessionManager.invalidate_session() end
 # {:ok, pid} = Connection.start_link(usr, pwd, "aa")

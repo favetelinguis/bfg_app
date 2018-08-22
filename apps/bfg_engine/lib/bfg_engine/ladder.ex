@@ -41,6 +41,36 @@ defmodule BfgEngine.Ladder do
 
   #TODO add support for key prices see dock with levele and add
 
+  def new_full_depth_ladder do
+    %{}
+  end
+
+  @doc """
+  If no update just return original value
+  """
+  def update_full_depth_ladder(ladder, nil) do
+    ladder
+  end
+
+  @doc """
+  If the list is empy also the ladder is empty
+  """
+  def update_full_depth_ladder(ladder, []) do
+    new_full_depth_ladder()
+  end
+
+  @doc """
+  Go over each entry in update and update the ladder accordingly
+  """
+  def update_full_depth_ladder(ladder, update) do
+    Enum.reduce(update, ladder, fn price_size, acc ->
+      case price_size do
+        [price, 0] -> Map.delete(acc, price)
+        [price, size] -> Map.put(acc, price, size)
+      end
+    end)
+  end
+
   def new() do
     %Ladder{batl: @initial_list, batb: @initial_list}
   end

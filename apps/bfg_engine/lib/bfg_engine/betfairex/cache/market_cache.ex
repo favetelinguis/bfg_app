@@ -13,4 +13,8 @@ defmodule BfgEngine.Betfairex.Cache.MarketCache do
     {:ok, nil}
   end
 
+    # TODO on each market there is a con true count how often for each market
+    def update(msg, publish_time) do
+    end
+
 end
