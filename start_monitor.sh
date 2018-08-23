@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
-prometheus --config.file=prometheus.yml &
+docker run -p 9090:9090 -v /Users/henriklarsson/repos/elixir/bfg_app/prometheus.yml:/etc/prometheus/prometheus.yml \
+       prom/prometheus &
 
-grafana-server --config=/usr/local/etc/grafana/grafana.ini --homepath /usr/local/share/grafana cfg:default.paths.logs=/usr/local/var/log/grafana cfg:default.paths.data=/usr/local/var/lib/grafana cfg:default.paths.plugins=/usr/local/var/lib/grafana/plugins &
+docker run -d -p 3000:3000 grafana/grafana &
