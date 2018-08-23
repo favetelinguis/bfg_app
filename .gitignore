@@ -22,3 +22,5 @@ erl_crash.dump
 # Not sure what they do but i exclude them
 /.idea/
 /.elixir_ls/
+
+data
