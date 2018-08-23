@@ -1,6 +1,6 @@
 defmodule BfgEngine.Betfairex.OrderBooks.OrderBookRunner do
   alias BfgEngine.Betfairex.OrderBooks.UnmatchedOrders
-  alias BfgEngine.Ladder
+  alias BfgEngine.Betfairex.Ladder
 
   def new(runner) do
     %{

@@ -1,8 +1,8 @@
-defmodule BfgEngine.Ladder do
+defmodule BfgEngine.Betfairex.Ladder do
   alias __MODULE__
   require Logger
   @ladder_levels Application.get_env(:bfg_engine, :ladder_levels)
-  @initial_list 0..@ladder_levels-1 |> Enum.map(&([&1, nil, nil]))
+  # @initial_list 0..@ladder_levels-1 |> Enum.map(&([&1, nil, nil]))
 
   # TODO i should put this in a map whith the keys as value and the order as index range len(ladder_levels)
   @ladder_prices [1.01, 1.02, 1.03, 1.04, 1.05, 1.06, 1.07, 1.08, 1.09, 1.10, 1.11, 1.12, 1.13, 1.14, 1.15,
@@ -37,8 +37,6 @@ defmodule BfgEngine.Ladder do
   @idx_to_price Stream.zip(Stream.iterate(0, &(&1+1)), @ladder_prices) |> Enum.into(%{})
   @price_to_idx Stream.with_index(@ladder_prices) |> Map.new
 
-  defstruct [:batl, :batb]
-
   #TODO add support for key prices see dock with levele and add
 
   def new_full_depth_ladder do
@@ -71,25 +69,20 @@ defmodule BfgEngine.Ladder do
     end)
   end
 
-  def new_depth_based_ladder(depth) do
-    initial_list = 0..depth - 1 |> Enum.map(&([&1, nil, nil]))
-    %Ladder{batl: initial_list, batb: initial_list}
+  def new_depth_based_ladder(depth \\ @ladder_levels) do
+    0..depth - 1 |> Enum.map(&([&1, nil, nil]))
+  end
+
+  def update_depth_based_ladder(ladder, nil) do
+    ladder
   end
 
   @doc """
   [0, 1.2, 20] -> Insert / Update level 0 (top of book) with price 1.2 and size 20
   [0, 1.2, 0] -> Remove level 0 (top of book) i.e. ladder is now empty
   """
-  def update_batb(ladder, delta_batb) do
-    %Ladder{ladder | batb: merge_prices(ladder.batb, delta_batb)}
-  end
-
-  def update_batl(ladder, delta_batl) do
-    %Ladder{ladder | batl: merge_prices(ladder.batl, delta_batl)}
-  end
-
-  def merge_prices(old, delta) do
-    Enum.reduce(delta, old, fn ([idx, price, size] = new, acc) ->
+  def update_depth_based_ladder(ladder, update) do
+    Enum.reduce(update, ladder, fn ([idx, price, size] = new, acc) ->
       case size do
         0 -> List.update_at(acc, idx, fn [^idx, price2, _] = value ->
           # Check that the price we are deleting is the same as the price we have inserted,

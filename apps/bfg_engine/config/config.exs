@@ -9,7 +9,7 @@ session_managemenet_url: "https://identitysso.betfair.com/api",
 betting_url: "https://api.betfair.com/exchange/betting/rest/v1.0",
 account_url: "https://api.betfair.com/exchange/account/rest/v1.0",
 keep_alive_ms: 1000 * 3600 * 3, # 3 hours
-ladder_levels: 2,
+ladder_levels: 10,
 betfair_user: System.get_env("BETFAIR_USER"),
 betfair_password: System.get_env("BETFAIR_PASSWORD"),
 betfair_app_key: System.get_env("BETFAIR_APPKEY_DELAY")

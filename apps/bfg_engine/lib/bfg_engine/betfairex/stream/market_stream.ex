@@ -8,6 +8,7 @@ defmodule BfgEngine.Betfairex.Stream.MarketStream do
   @stream_url Application.get_env(:bfg_engine, :stream_url)
   @stream_port Application.get_env(:bfg_engine, :stream_port)
   @app_key Application.get_env(:bfg_engine, :betfair_app_key)
+  @ladder_levels Application.get_env(:bfg_engine, :ladder_levels)
   @keep_alive_timeout 5000
 
   @lookup :oc
