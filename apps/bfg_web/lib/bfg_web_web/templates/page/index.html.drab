@@ -1,9 +1,0 @@
-<div class="page-header">
-  <h1>Select market</h1>
-  <div class="btn-group" role="group" aria-label="...">
-    <%= for market_id <- @market_ids do %>
-      <button type="button" class="btn btn-default" drab-click="subscribe_market('<%= market_id %>')"><%= market_id %></button>
-    <% end %>
-  </div>
-  <pre><code class="accesslog"><%= @genevent %></code></pre>
-</div>
