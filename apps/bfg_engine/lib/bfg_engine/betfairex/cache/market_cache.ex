@@ -28,10 +28,9 @@ defmodule BfgEngine.Betfairex.Cache.MarketCache do
       # TODO this should not update the cache and we should resubscribe the merket stream to get a fresh image
       {:reply, :ok, state}
     else
-      updated_cache = MarketBooks.update(cache, update)
+      updated_cache = MarketBooks.update(cache, update, publish_time)
 
-      # TODO dont put publish time here since not all markets are change with each update, this should be put per order in the cache
-      {:reply, :ok, {publish_time, updated_cache}}
+      {:reply, :ok, {Timex.now, updated_cache}}
     end
   end
 end
